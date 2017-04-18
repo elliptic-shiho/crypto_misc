@@ -100,17 +100,30 @@ class AES128(object):
     s.keys = []
 
   def AddRoundKey(s, m, k):
-    return map(lambda x: x[0] ^^ x[1], zip(m, k))
+    return m + k
 
   def MixColumns(s, m):
-    m = Matrix(F, 4, 4, map(ntopoly, m)).T
-    return map(polyton, reduce(lambda x, y: x + list(y), Matrix(F, 4, 4, mat_P * m).T, []))
+    return mat_P * m
 
   def SubBytes(s, m):
-    return map(SBox, m)
+    for i in xrange(4):
+      for j in xrange(4):
+        m[i, j] = ntopoly(SBox(polyton(m[i, j])))
+    return m
 
   def ShiftRows(s, m):
-    m = reduce(lambda x, y: x + list(y), Matrix(ZZ, 4, 4, m).T, [])
+    '''
+    [a00, a01, a02, a03]
+    [a10, a11, a12, a13]
+    [a20, a21, a22, a23]
+    [a30, a31, a32, a33]
+      =>
+    [a00, a01, a02, a03]
+    [a11, a12, a13, a10]
+    [a22, a23, a20, a21]
+    [a33, a30, a31, a32]
+    '''
+    m = reduce(lambda x, y: x + list(y), Matrix(F, 4, 4, m), [])
     res = m[:4]
     t = m[4:8]
     res += t[1:] + t[:1]
@@ -118,8 +131,7 @@ class AES128(object):
     res += t[2:] + t[:2]
     t = m[12:16]
     res += t[3:] + t[:3]
-    res = reduce(lambda x, y: x + list(y), Matrix(ZZ, 4, 4, res).T, [])
-    return res
+    return Matrix(F, 4, 4, res)
 
   def KeyExpansions(s):
     keys = []
@@ -157,11 +169,12 @@ class AES128(object):
   def encrypt(s, m):
     assert len(m) == 16
 
+    m = Matrix(F, 4, 4, map(ntopoly, m)).T
+
     def NextRoundKey():
       t = s.keys[:16]
-      print 'NextRoundKey:', map(hex, t)
       s.keys = s.keys[16:]
-      return t
+      return Matrix(F, 4, 4, map(ntopoly, t)).T
 
     s.KeyExpansions()
 
@@ -174,6 +187,8 @@ class AES128(object):
     m = s.SubBytes(m)
     m = s.ShiftRows(m)
     m = s.AddRoundKey(m, NextRoundKey())
+    m = reduce(lambda x, y: x + list(y), m.T, [])
+    m = map(polyton, m)
     return m
 
 if __name__ == '__main__':
