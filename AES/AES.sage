@@ -133,6 +133,37 @@ class AES128(object):
     res += t[3:] + t[:3]
     return Matrix(F, 4, 4, res)
 
+  def MixColumnsInv(s, m):
+    return mat_P_inv * m
+
+  def SubBytesInv(s, m):
+    for i in xrange(4):
+      for j in xrange(4):
+        m[i, j] = ntopoly(SBoxInv(polyton(m[i, j])))
+    return m
+
+  def ShiftRowsInv(s, m):
+    '''
+    [a00, a01, a02, a03]
+    [a10, a11, a12, a13]
+    [a20, a21, a22, a23]
+    [a30, a31, a32, a33]
+      =>
+    [a00, a01, a02, a03]
+    [a13, a10, a13, a10]
+    [a22, a23, a20, a21]
+    [a31, a32, a33, a30]
+    '''
+    m = reduce(lambda x, y: x + list(y), Matrix(F, 4, 4, m), [])
+    res = m[:4]
+    t = m[4:8]
+    res += t[3:] + t[:3]
+    t = m[8:12]
+    res += t[2:] + t[:2]
+    t = m[12:16]
+    res += t[1:] + t[:1]
+    return Matrix(F, 4, 4, res)
+
   def KeyExpansions(s):
     keys = []
     # In 128-bit AES, constant value `n` and `b` is 16 and 176.
@@ -191,6 +222,32 @@ class AES128(object):
     m = map(polyton, m)
     return m
 
+  def decrypt(s, m):
+    assert len(m) == 16
+
+    m = Matrix(F, 4, 4, map(ntopoly, m)).T
+
+    def NextRoundKey():
+      t = s.keys[-16:]
+      s.keys = s.keys[:-16]
+      print t, s.keys
+      return Matrix(F, 4, 4, map(ntopoly, t)).T
+
+    s.KeyExpansions()
+
+    m = s.AddRoundKey(m, NextRoundKey())
+    m = s.ShiftRowsInv(m)
+    m = s.SubBytesInv(m)
+    for r in xrange(s.rounds - 1):
+      m = s.AddRoundKey(m, NextRoundKey())
+      m = s.MixColumnsInv(m)
+      m = s.ShiftRowsInv(m)
+      m = s.SubBytesInv(m)
+    m = s.AddRoundKey(m, NextRoundKey())
+    m = reduce(lambda x, y: x + list(y), m.T, [])
+    m = map(polyton, m)
+    return m
+
 if __name__ == '__main__':
   test_vec = [219, 19, 83, 69]
   test_vec_ = [142, 77, 161, 188]
@@ -217,3 +274,4 @@ if __name__ == '__main__':
   cipher = AES128(10, map(ord, '5468617473206D79204B756E67204675'.decode('hex')))
   c = ''.join(map(lambda t: format(t, '02x'), cipher.encrypt(map(ord, '54776F204F6E65204E696E652054776F'.decode('hex')))))
   assert c == '29c3505f571420f6402299b31a02d73a'
+  print ''.join(map(lambda t: format(t, '02x'), cipher.decrypt(map(ord, '29c3505f571420f6402299b31a02d73a'.decode('hex')))))
