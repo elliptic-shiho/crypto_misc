@@ -1,4 +1,5 @@
 from sage.all import *
+from copy import copy
 
 # Fk := F_2
 # F := Fk[x] / (x^8 + x^4 + x^3 + x + 1)
@@ -123,7 +124,7 @@ class AES128(object):
     [a22, a23, a20, a21]
     [a33, a30, a31, a32]
     '''
-    m = reduce(lambda x, y: x + list(y), Matrix(F, 4, 4, m), [])
+    m = reduce(lambda x, y: x + list(y), m, [])
     res = m[:4]
     t = m[4:8]
     res += t[1:] + t[:1]
@@ -154,7 +155,7 @@ class AES128(object):
     [a22, a23, a20, a21]
     [a31, a32, a33, a30]
     '''
-    m = reduce(lambda x, y: x + list(y), Matrix(F, 4, 4, m), [])
+    m = reduce(lambda x, y: x + list(y), m, [])
     res = m[:4]
     t = m[4:8]
     res += t[3:] + t[:3]
@@ -185,7 +186,7 @@ class AES128(object):
       x[0] = x[0] ^^ rcon(i)
       return x
 
-    key = s.key
+    key = copy(s.key)
     i = 1
     while c < b:
       t = key[-4:]
@@ -195,7 +196,7 @@ class AES128(object):
       for j in xrange(4):
         key += [key[-16] ^^ t[j]]
         c += 1
-      s.keys = key
+    s.keys = key
 
   def encrypt(s, m):
     assert len(m) == 16
@@ -229,8 +230,7 @@ class AES128(object):
 
     def NextRoundKey():
       t = s.keys[-16:]
-      s.keys = s.keys[:-16]
-      print t, s.keys
+      s.keys = s.keys[:len(s.keys)-16]
       return Matrix(F, 4, 4, map(ntopoly, t)).T
 
     s.KeyExpansions()
@@ -248,7 +248,7 @@ class AES128(object):
     m = map(polyton, m)
     return m
 
-if __name__ == '__main__':
+def main():
   test_vec = [219, 19, 83, 69]
   test_vec_ = [142, 77, 161, 188]
   assert PBox(test_vec) == test_vec_
@@ -272,6 +272,10 @@ if __name__ == '__main__':
     0xb4, 0xef, 0x5b, 0xcb, 0x3e, 0x92, 0xe2, 0x11, 0x23, 0xe9, 0x51, 0xcf, 0x6f, 0x8f, 0x18, 0x8e]
   assert cipher.keys == test_key_expansions
   cipher = AES128(10, map(ord, '5468617473206D79204B756E67204675'.decode('hex')))
-  c = ''.join(map(lambda t: format(t, '02x'), cipher.encrypt(map(ord, '54776F204F6E65204E696E652054776F'.decode('hex')))))
-  assert c == '29c3505f571420f6402299b31a02d73a'
-  print ''.join(map(lambda t: format(t, '02x'), cipher.decrypt(map(ord, '29c3505f571420f6402299b31a02d73a'.decode('hex')))))
+  test_plain = map(ord, '54776F204F6E65204E696E652054776F'.decode('hex'))
+  test_cipher = map(ord, '29c3505f571420f6402299b31a02d73a'.decode('hex'))
+  assert cipher.encrypt(test_plain) == test_cipher
+  assert cipher.decrypt(test_cipher) == test_plain
+
+if __name__ == '__main__':
+  main()
