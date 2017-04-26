@@ -7,10 +7,11 @@ Fk = GF(2)
 F.<X> = Fk[x].quotient(x^8+x^4+x^3+x+1)
 X = F.gen()
 
-
+@CachedFunction
 def ntopoly(npoly, X=X):
       return sum(c*X**e for e, c in enumerate(Integer(npoly).bits()))
 
+@CachedFunction
 def polyton(poly, X=X):
   if not hasattr(poly, 'list'):
     if poly in [0, 1]:
@@ -72,6 +73,7 @@ def to_bits(x):
 def to_poly(x):
   return ntopoly(ZZ(''.join(map(lambda t: str(t[0]), x))[::-1], 2))
 
+@CachedFunction
 def SBox(x):
   if not hasattr(x, 'polynomial'):
     x = ntopoly(x)
@@ -87,6 +89,7 @@ def PBoxInv(x):
   x = Matrix(F, 4, 1, map(ntopoly, x))
   return map(lambda t: polyton(t[0]), mat_P_inv * x)
 
+@CachedFunction
 def SBoxInv(x):
   y = to_poly(mat_S_inv * to_bits(x) + vec_S_inv)
   if y != 0:
@@ -94,11 +97,12 @@ def SBoxInv(x):
   return polyton(y)
 
 class AES128(object):
-  def __init__(s, rounds, key):
+  def __init__(s, rounds, key, schedule=True):
     assert len(key) == 16
     s.key = key
     s.rounds = rounds
     s.keys = []
+    s.schedule = schedule
 
   def AddRoundKey(s, m, k):
     return m + k
@@ -173,6 +177,9 @@ class AES128(object):
     n = 16
     b = (s.rounds + 1) * n
     c = 16
+    if not s.schedule:
+      s.keys = s.key * (s.rounds + 1)
+      return
 
     def rcon(i):
       return polyton(ntopoly(2)^(i-1))
