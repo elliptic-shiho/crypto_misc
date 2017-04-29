@@ -172,7 +172,7 @@ if __name__ == '__main__':
   pol = e^2 * x^2 + e*x*(y+z-2)-(y+z-1)-(n-1)*y*z
   x0, y0, z0 = jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm)
 
-  # `x0` is secret exponents. so, `e` * `x0` equivalent to 1 modulo `n`.
+  # `x0` is secret exponents. so, `e` * `x0` equivalent to 1 modulo `\phi(n)`.
   assert (Mod(0xdeadbeefcafebabe, n)^e)^x0 == 0xdeadbeefcafebabe
 
   print '[+] d = %d' % x0
