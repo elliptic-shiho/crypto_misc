@@ -26,7 +26,7 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
   '''
   _pol = _pol.monic()
   kk = _pol.degree()
-  epsilon = RR(1/log(N, 2))
+  epsilon = RR(1/log(modulo, 2))
   assert hh >= floor(max(RR(7/kk), RR((kk + epsilon * kk - 1) / (epsilon * kk^2))))
   PR = PolynomialRing(ZZ, 'x')
   x = PR.gen()
@@ -59,8 +59,8 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
   # Matrix Construction: Diagonal Matrix. D = (d_{ij}) (0 <= i, j < hk) where d_{ij} = delta * (X^-i) if i = j, otherwise d_{ij} = 0
 
   D = Matrix(QQ, hh * kk)
-  # delta = (RR(sqrt(hh * kk)) * 1000000).integer_part() / 1000000
-  delta = 1
+  delta = QQ((RR(sqrt(hh * kk)) * 1000000).integer_part() / 1000000)
+  # delta = 1
 
   for g in xrange(hh * kk):
     D[g, g] = delta * (1 / (XX^g))
@@ -117,7 +117,7 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
         HM.add_multiple_of_row(g, i, -pivot)
 
   '''
-  for transform to zero matrix at lower-left.
+  Do elementary row operations for transform to zero matrix at lower-left.
 
         |           |
         |  M^ |  O  |
@@ -173,7 +173,6 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
   pol_qq = PQ(pol)
 
   # Constuct Polynomial Vector: (1, x0, ..., x0^{hk-1}, -y0, -y0x0, ..., -y0x0^{k-1}, ..., -y0^{h-1}x0^{k-1})
-  # And 
   # cf. [1] pp.157 - 159, [2] pp.135 - 137
   v = []
   v = Matrix(PQ, 1, 2*hh*kk-kk)
