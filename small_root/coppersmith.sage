@@ -15,7 +15,7 @@ def matrix_overview(BB):
     print a
   print 
 
-def coppersmith_univariate(_pol, modulo, XX, hh):
+def coppersmith_univariate(_pol, modulo, XX=None, hh=None, epsilon=None):
   '''
   Implementaion of Coppersmith's Solving Univariate Modular Equation with Small Root [1].
 
@@ -24,9 +24,14 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
     [1] Don Coppersmith. 1996. "Finding a Small Root of a Univariate Modular Equation"
     [2] Nicholas Howgrave-Graham. 1997. "Finding Small Roots of Univariate Modular Equations Revisited"
   '''
-  _pol = _pol.monic()
+  assert _pol.is_monic(), 'p(x) must be monic'
   kk = _pol.degree()
-  epsilon = RR(1/log(modulo, 2))
+  if epsilon is None:
+    epsilon = RR(1/log(modulo, 2))
+  if hh is None:
+    hh = floor(max(RR(7/kk), RR((kk + epsilon * kk - 1) / (epsilon * kk^2)))) + 1
+  if XX is None:
+    XX = floor(RR(0.5 * modulo ^ (1/k - epsilon)))
   assert hh >= floor(max(RR(7/kk), RR((kk + epsilon * kk - 1) / (epsilon * kk^2))))
   PR = PolynomialRing(ZZ, 'x')
   x = PR.gen()
@@ -86,6 +91,7 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
   assert M.ncols() == (2*hh*kk - kk)
   assert M.nrows() == (2*hh*kk - kk)
 
+  # Transform Matrix to extract sub-matrix \hat{M} (|det(M)| = |det(\hat{M})|)
   HM = copy(M)
 
   # Swap some rows: prepare for identity submatrix - lower right
@@ -100,9 +106,10 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
   Do elementary row operations (like Gaussian Elimination)
 
   for transform to identity matrix at lower-right.
+  Note: p(x) is monic, we know all q_{ij} is monic. so, all diagonal element of upper-right submatrix `A` is also 1.
 
         |           |
-        |  D  |  A  |
+        |  *  |  *  |
   M_1 = | ----+---- |
         |  A' |  I  |
         |           |
@@ -117,7 +124,7 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
         HM.add_multiple_of_row(g, i, -pivot)
 
   '''
-  Do elementary row operations for transform to zero matrix at lower-left.
+  Do elementary row operations for transform to zero matrix at upper-right.
 
         |           |
         |  M^ |  O  |
@@ -153,7 +160,7 @@ def coppersmith_univariate(_pol, modulo, XX, hh):
   print '[+] B (LLL-reduced matrix):'
   matrix_overview(B)
 
-  # Create orthogonal matrix for checking bounds (cf. [1] p.158)
+  # Create orthogonal matrix for checking bounds (cf. [1] p.158, [2] p.132)
   Bstar_vec = [B[0]]
   for i in xrange(1, B.nrows()):
     s = B[i]
