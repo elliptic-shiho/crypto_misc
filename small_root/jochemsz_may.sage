@@ -38,7 +38,7 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
 
   if a0 != 0:
     F = Zmod(RR)
-    PK = PolynomialRing(F, 'xs, ys, zs', order='lex')
+    PK = PolynomialRing(F, 'xs, ys, zs')
     f_ = PR(PK(f_) * F(a0)^-1)
 
   # Construct set `S` (cf.[1] p.8)
