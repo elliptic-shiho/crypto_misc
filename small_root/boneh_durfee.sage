@@ -140,7 +140,7 @@ def solve_SIP_wiener_bound(e, n, delta=0.25, beta=0.6, mm=3):
   pol = x * (A + y) - 1
   XX = floor(n ^ delta)
   YY = floor(n ^ beta)
-  x0, y0 = boneh_durfee_bivariate_wiener_bound(pol, e, XX, YY, mm, 0)
+  x0, y0 = boneh_durfee_bivariate_wiener_bound(pol, e, XX, YY, mm, 1)
   assert pol(x0, y0) == 0
   d0 = (x0 * (A + y0) - 1) / e
   assert (Zmod(n)(2)^e)^d0 == 2
