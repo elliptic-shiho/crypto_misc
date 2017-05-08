@@ -5,6 +5,7 @@ Small Root
 * [coron.sage](coron.sage) - Solve bivariate integer polynomial with small root (Implementation of [1])
 * [jochemsz_may.sage](jochemsz_may.sage) - Solve trivariate integer polynomial with small root (Implementation of [2])
 * [coppersmith.sage](coppersmith.sage) - Solve univariate modular equation with small root (A *faithfully* Implementation of [3], and I also referenced [4].)
+* [howgrave_graham.sage](howgrave_graham.sage) - Solve univariate modular equation with small root (Howgrave-Graham's method. Implementation of [4].)
 
 # References
 
