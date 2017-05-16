@@ -1,6 +1,20 @@
 from sage.all import *
 
+# Qn_tau is implementation of Quotient ring Z/nZ[x] / (x^2 - tau)
+load('Qn_tau.sage')
+# EC is simple implementation of Elliptic Curve
+# (because, sage's elliptic curve implementation is not compatible with Qn_tau)
+load('EC.sage')
+
 def factor_shirase_linear(n, D):
+  '''
+  Implementation of yet another Elliptic-Curve Factorization Method proposed by [1]
+    with D = 11, 19, 43, 67, 163, if and only if H_D(j) is linear
+      where H_D(j) is Hilbert's Class Polynomial with discriminant is D.
+
+  References:
+  * [1] Masaaki Shirase, 2017, "Condition on composite numbers easily factored with elliptic curve method"
+  '''
   F = Zmod(n)
   PF = PolynomialRing(F, 'X')
   x = PF.gen()
@@ -15,18 +29,23 @@ def factor_shirase_linear(n, D):
     BDR = (2 * j0 * R^3 * j0_inv_1728) % n
     x0 = ZZ.random_element(0, n)
     tau = (x0^3 + ADR * x0 + BDR) % n
-    Q_tau = PF.quo(x^2 - tau)
-    E = EllipticCurve(F, [ADR, BDR])
-    EQ = E.base_extend(Q_tau)
-    print EQ
-    X = Q_tau.gen()
-    P = EQ(x0, X)
-    print X^2 - (x0^3 + ADR * x0 + BDR)
-    eq = pari(EQ)
-    print eq
-
+    FQ = Qn_tau(n, tau)
+    E = EC(FQ, ADR, BDR)
+    P = ECPoint(FQ(x0, 0), FQ(0, 1), 1)
+    try:
+      nP = E.mul(n, P)
+    except ZeroDivisionError, e:
+      t = e.args[0].split()
+      x0, x1 = ZZ(t[0]), ZZ(t[2].replace('X', ''))
+      g = gcd(x0^2 - x1^2 * tau, n)
+      if 0 < g < n:
+        return g
 
 if __name__ == '__main__':
   # HITB AMS 2016 Teaser: Crypto 1000 Special Prime Rib
   n = 0x80fab241e21aacbb5a0c0c58ce7d8a3f844f3f76c2b1006278d79cdd333550ab5f5f86425fdbf06063481d7d7922f1c17083532285b1d8faee843d8a02e74f277a47084bc5585f0d16a2ab7f2e2c074a274c9b890b05a4ed05739f9baeaa501c265d68c04c146a5daed6ef5e0a45aa7c9ae1e7c3741c39f7f00936d1d627bc5b
-  factor_shirase_linear(n, 11)
+  p = factor_shirase_linear(n, 11)
+  assert n % p == 0
+  assert 0 < p < n
+  q = n / p
+  assert p * q == n
