@@ -15,26 +15,6 @@ def matrix_overview(BB):
     print a
   print 
 
-def is_geometrically_progressive(_M, a, b, C, D, c0, c1, c2, c3, c4, beta):
-  assert _M.ncols() == (a + 1) * b
-  assert _M.nrows() == (a + 1) * b
-  M = lambda i,j,k,l: _M[b * i + j, b * k + l]
-  if not (beta * c1 + c3 >= 0 and beta * (c2 + c4)):
-    return False
-  for i in xrange(a + 1):
-    for j in xrange(1, b + 1):
-      for k in xrange(a + 1):
-        for l in xrange(1, b + 1):
-          if i == k and j == l:
-            if not M(k, l, k, l) == D ^ (c0 + c1 * k + c2 * l + c3 * k + c4 * l):
-              return False
-          elif i > k and j > l:
-            if not M(i, j, k, l) == 0:
-              return False
-          else:
-            if not abs(M(i, j, k, l)) <= C * D ^ (c0 + c1 * i + c2 * j + c3 * k + c4 * l):
-              return False
-
 def boneh_durfee_bivariate_wiener_bound(_pol, modulo, XX, YY, mm, tt):
   '''
   Boneh-Durfee's Algorithm for Solving Modular Bivariate Equation with Small Root - Wiener's Bound
@@ -180,8 +160,8 @@ def boneh_durfee_bivariate(_pol, modulo, XX, YY, mm, tt):
       to_rem += [ii]
 
   print to_rem
-  #for ii in to_rem[::-1]:
-    #M = M[:ii].stack(M[ii+1:])
+  for ii in to_rem[::-1]:
+    M = M[:ii].stack(M[ii+1:])
 
   matrix_overview(M)
 
@@ -247,7 +227,7 @@ def boneh_durfee_bivariate(_pol, modulo, XX, YY, mm, tt):
     return None, None
   return root_x, root_y
 
-def solve_SIP(e, n, delta=0.3, beta=0.5, mm=5):
+def solve_SIP(e, n, delta=0.3, beta=0.5, mm=3):
   F = Zmod(e)
   PR = PolynomialRing(F, 'x, y')
   x, y = PR.gens()
