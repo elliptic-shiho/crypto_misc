@@ -16,13 +16,17 @@ def matrix_overview(BB):
 
 def coron_bivariate_integer_small_root(poly, XX, YY, kk):
   '''
-  Bivariate Polynomial Small Root
+  Solve Bivariate Polynomial Small Root
 
   Implementation of [1].
 
   References:
     * [1] Jean-Se'bastien Coron. 2004. "Finding Small Roots of Bivariate Integer Polynomial Equations Revisited"
-  '''
+
+  Author:
+    Hayato Ashida
+'''
+
   p00 = poly.constant_coefficient()
   assert gcd(p00, XX * YY) == 1, 'p00 and XY has common divisor'
   x, y = poly.parent().gens()
@@ -112,6 +116,7 @@ def coron_bivariate_integer_small_root(poly, XX, YY, kk):
       H[i] += PK((monomials[j] * B[i, j]) / monomials[j](XX, YY))
 
   # Solve for `x`
+  # My Heuristics: finding resultant from all polynomials
   for i in xrange(omega):
     pol = H[i].resultant(pkf, yk).subs(xk=xs)
     if not isinstance(pol, Integer):
