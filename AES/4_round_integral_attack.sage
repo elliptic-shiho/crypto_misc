@@ -20,8 +20,7 @@ def integral_attack(index, cipher, collected_texts):
     if c == 0:
       cand += [k0]
   return cand
-
-if __name__ == '__main__':
+def main():
   key = map(ord, os.urandom(16))
   print '[+] Key = %r' % key
   cipher = AES128(4, key, schedule=False)
@@ -43,3 +42,6 @@ if __name__ == '__main__':
       break
   else:
     print '[-] Failed'
+
+if __name__ == '__main__':
+  main()
