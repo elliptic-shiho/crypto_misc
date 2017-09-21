@@ -3,15 +3,13 @@ import itertools
 
 # display matrix picture with 0 and X
 # references: https://github.com/mimoo/RSA-and-LLL-attacks/blob/master/boneh_durfee.sage
-def matrix_overview(BB, bound):
+def matrix_overview(BB):
   for ii in range(BB.dimensions()[0]):
     a = ('%02d ' % ii)
     for jj in range(BB.dimensions()[1]):
       a += ' ' if BB[ii,jj] == 0 else 'X'
       if BB.dimensions()[0] < 60:
         a += ' '
-    if BB[ii, ii] >= bound:
-      a += '~'
     print a
 
 def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
@@ -46,15 +44,31 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
   for i2, i3 in itertools.product(range(0, mm), repeat=2):
     for i1 in range(0, 2*(mm-1) - (i2 + i3) + tt + 1):
       S.add(x^i1 * y^i2 * z^i3)
-  S = sorted(S)
+  m_S = []
+  for k in xrange(mm):
+    for j in xrange(mm):
+      for i in xrange(2*(mm-1) - (i2 + i3) + tt + 1):
+        m_S += [x^i*y^j*z^k]
+  S = m_S
 
   # Construct set `M` (cf.[1] p.8)
   M = set()
   for i2, i3 in itertools.product(range(0, mm + 1), repeat=2):
     for i1 in range(0, 2*mm - (i2 + i3) + tt + 1):
       M.add(x^i1 * y^i2 * z^i3)
-  M_S = sorted(M - set(S))
-  M = sorted(M)
+  M_S = list(M - set(S))
+
+  m_M_S = []
+  deg_x = max([mono.degree(x) for mono in M_S])
+  deg_y = max([mono.degree(y) for mono in M_S])
+  deg_z = max([mono.degree(z) for mono in M_S])
+  for k in xrange(deg_z + 1):
+    for j in xrange(deg_y + 1):
+      for i in xrange(deg_x + 1):
+        mono = x^i*y^j*z^k
+        if mono in M_S:
+          m_M_S += [mono]
+  M_S = m_M_S
 
   # Construct polynomial `g`, `g'` for basis of lattice
   g = []
@@ -69,11 +83,23 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
     g_ += [monomial * RR]
 
   # Construct Lattice from `g`, `g'`
+  monomials_G = []
   monomials = []
   G = g + g_
+  deg_x = deg_y = deg_z = 0
   for g_poly in G:
-    monomials += g_poly.monomials()
-  monomials = sorted(set(monomials))
+    monomials_G += g_poly.monomials()
+    deg_x = max(deg_x, g_poly.degree(x))
+    deg_y = max(deg_y, g_poly.degree(y))
+    deg_z = max(deg_z, g_poly.degree(z))
+  monomials_G = sorted(set(monomials_G))
+
+  for k in xrange(deg_z + 1):
+    for j in xrange(deg_y + 1):
+      for i in xrange(deg_x + 1):
+        mono = x^i*y^j*z^k
+        if mono in monomials_G:
+          monomials += [x^i*y^j*z^k]
   assert len(monomials) == len(G)
   dims = len(monomials)
   M = Matrix(IntegerRing(), dims)
@@ -82,7 +108,7 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
     for j in xrange(dims):
       if monomials[j] in G[i].monomials():
         M[i, j] = G[i].monomial_coefficient(monomials[j]) * monomials[j](XX, YY, ZZ)
-  matrix_overview(M, 10)
+  matrix_overview(M)
   print 
   print '=' * 128
   print 
@@ -90,13 +116,13 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
   # LLL
 
   B = M.LLL()
-  matrix_overview(B, 10)
+  matrix_overview(B)
 
   # Re-construct polynomial `H_i` from Reduced-lattice
   H = [(i, 0) for i in xrange(dims)]
   H = dict(H)
-  for j in xrange(dims):
-    for i in xrange(dims):
+  for i in xrange(dims):
+    for j in xrange(dims):
       H[i] += PR((monomials[j] * B[i, j]) / monomials[j](XX, YY, ZZ))
 
   PX = PolynomialRing(IntegerRing(), 'xn')
@@ -107,8 +133,8 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
   zn = PX.gen()
 
   # Solve for `x`
-  r1 = H[1].resultant(pol, y)
-  r2 = H[2].resultant(pol, y)
+  r1 = H[2].resultant(pol, y)
+  r2 = H[3].resultant(pol, y)
   r3 = r1.resultant(r2, z)
   x_roots = map(lambda t: t[0], r3.subs(x=xn).roots())
   assert len(x_roots) > 0
@@ -130,7 +156,7 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
   print '[+] Found z0 = %d' % z_root
 
   # Solve for `y`
-  y_roots = map(lambda t: t[0], H[1].subs(x=x_root, z=z_root).subs(y=yn).roots())
+  y_roots = map(lambda t: t[0], H[2].subs(x=x_root, z=z_root).subs(y=yn).roots())
   assert len(y_roots) > 0
   if len(y_roots) == 1 and y_roots[0] == 0:
     print '[-] Can\'t find non-trivial solution for `y`'
@@ -166,7 +192,7 @@ if __name__ == '__main__':
   tau = (1/2 + gamma - 4*delta) / (2*delta)
 
   # Powering degree
-  mm = 2
+  mm = 1
 
   # Target polynomial
   pol = e^2 * x^2 + e*x*(y+z-2)-(y+z-1)-(n-1)*y*z

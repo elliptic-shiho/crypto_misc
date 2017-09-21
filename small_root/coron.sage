@@ -22,9 +22,6 @@ def coron_bivariate_integer_small_root(poly, XX, YY, kk):
 
   References:
     * [1] Jean-Se'bastien Coron. 2004. "Finding Small Roots of Bivariate Integer Polynomial Equations Revisited"
-
-  Author:
-    Hayato Ashida
 '''
 
   p00 = poly.constant_coefficient()
