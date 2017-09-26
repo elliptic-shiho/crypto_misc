@@ -20,6 +20,12 @@ def matrix_overview(BB, bound=None):
 
 def boneh_durfee_bivariate(_pol, modulo, XX, YY, mm, tt):
   '''
+  Implementaion of Boneh-Durfee's Solving Bivariate Modular Equation with Small Root [1].
+
+  References:
+  [1] Dan Boneh and Glenn Durfee. 1999. "Cryptanalysis of RSA with Private Key d Less than N^0.292"
+  '''
+  '''
   Lifting `_pol` upto Z[x, y]
   '''
   PR = PolynomialRing(ZZ, 'x, y')
