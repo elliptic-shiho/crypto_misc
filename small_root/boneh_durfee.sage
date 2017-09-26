@@ -198,7 +198,7 @@ def solve_SIP(e, n, delta=0.292, beta=0.5, mm=3):
   F = Zmod(e)
   PR = PolynomialRing(ZZ, 'x, y')
   x, y = PR.gens()
-  A = ZZ((n + 1))
+  A = ZZ((n + 1)/2)
   pol = x * (A + y) - 1
   XX = floor(e ^ delta)
   YY = floor(e ^ beta)
