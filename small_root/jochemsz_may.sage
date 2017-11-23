@@ -12,6 +12,39 @@ def matrix_overview(BB):
         a += ' '
     print a
 
+def sort_monomials(monomials):
+  x, y, z = monomials[0].parent().gens()
+  Mx = []
+  My = []
+  Mz = []
+  degx = max([monomial.degree(x) for monomial in monomials])
+  degy = max([monomial.degree(y) for monomial in monomials])
+  degz = max([monomial.degree(z) for monomial in monomials])
+  for i in xrange(degx + 1):
+    for j in xrange(degy + 1):
+      for k in xrange(degz + 1):
+        if k+j > i:
+          break
+        mono = x^i * y^j * z^k
+        if mono in monomials:
+          Mx += [mono]
+  for j in xrange(degy + 1):
+    for k in xrange(degz + 1):
+      for i in xrange(degx + 1):
+        if k > j:
+          break
+        mono = x^i * y^j * z^k
+        if mono in monomials and mono not in Mx:
+          My += [mono]
+  for k in xrange(degz + 1):
+    for j in xrange(degy + 1):
+      for i in xrange(degx + 1):
+        mono = x^i * y^j * z^k
+        if mono in monomials and mono not in (Mx+My):
+          Mz += [mono]
+  return Mx + My + Mz
+
+
 def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
   '''
   Implementation of Finding roots of trivariate polynomial [1].
@@ -73,6 +106,8 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
   # Construct polynomial `g`, `g'` for basis of lattice
   g = []
   g_ = []
+  M_S = sort_monomials(M_S)
+  S = sort_monomials(S)
   for monomial in S:
     i1 = monomial.degree(x)
     i2 = monomial.degree(y)
@@ -101,6 +136,7 @@ def jochemsz_may_trivariate(pol, XX, YY, ZZ, WW, tau, mm):
         if mono in monomials_G:
           monomials += [x^i*y^j*z^k]
   assert len(monomials) == len(G)
+  monomials = sort_monomials(monomials)
   dims = len(monomials)
   M = Matrix(IntegerRing(), dims)
   for i in xrange(dims):

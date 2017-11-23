@@ -1,4 +1,4 @@
-Prime Factorization
+Misc Algorithm Implementations
 =====================
 
 * p-1 method [p_1.py](p_1.py)
