@@ -2,6 +2,7 @@ Misc Algorithm Implementations
 =====================
 
 * p-1 method [p_1.py](p_1.py)
+* Reed-Solomon Code w/ Euclid Decoder Implementation [reed_solomon.sage](reed_solomon.sage)
 
 In `p-1` method, `p-1` must be *`B`-smooth* (i.e. For all integer `x` which satisfy `x | p-1`, It has `x < B).
 
