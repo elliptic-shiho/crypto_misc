@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from sage.all import *
 
 class ReedSolomonCode(object):
@@ -13,11 +14,13 @@ class ReedSolomonCode(object):
     Initialize encoder/decoder.
 
     Args:
-      F : Base finite field (e.g. GF(2^8))
-      N : Length of the codeword
-      K : Length of the message
-      b : burst errors parameter
-      t : 
+      F     : base finite field (e.g. GF(2^8))
+      N     : size of (codeword + message)
+      K     : size of message
+      b     : (optional) number of burst errors
+      t     : (optional) maximum number of terms of error polynomial
+      G     : (optional) generator polynomial
+      debug : (optional) is print debug message
     '''
     assert N > K > 0
     if t is None:
@@ -37,22 +40,72 @@ class ReedSolomonCode(object):
     s.debug = debug
 
   def to_poly(s, _list):
-    return sum(map(lambda x: s.X^x[0] * (s.zz^x[1] if x[1] != 0 else 0), enumerate(_list)))
+    '''
+    Convert to polynomial from list
+
+    Args:
+      _list : An integer-valued list
+
+    Returns:
+      A polynomial corresponding to `_list`
+    '''
+    return sum(map(lambda x: s.X^x[0] * (s.zz^s.F.int_to_log(x[1]) if x[1] != 0 else 0), enumerate(_list)))
 
   def to_list(s, poly):
-    return map(lambda t: int(t._log_repr()), poly.coefficients(sparse=False))
+    '''
+    Convert to list from polynomial
 
-  def encode(s, message):
+    Args:
+      poly : A polynomial over `s.PR`
+
+    Returns:
+      An integer-valued list corresponding to `poly`
+    '''
+    return map(lambda t: s.F.log_to_int(int(t._log_repr())), poly.coefficients(sparse=False))
+
+  def encode(s, message, is_poly=False):
+    '''
+    Encode message using Reed-Solomon code
+
+    Args:
+      message : An integer-valued list
+      is_poly : Is return polynomial
+
+    Returns:
+      if is_poly == True:
+        Reed-Solomon Code polynomial `C(x)`
+      else:
+        An integer-valued list corresponding to `C(x)`
+    '''
     assert len(message) == s.K
     I = s.to_poly(message)
     K = I * s.X^(2*s.t)
     P = K % s.G
     C = K - P # C(x) = k(x) * G(x) = K(x) - (K(x) mod G(x))
-    return C
+    if is_poly:
+      return C
+    return s.to_list(C)
 
-  def decode(s, Y):
+  def decode(s, Y, is_poly=False):
+    '''
+    Decode received polynomial using Euclid decoder [1], [2].
+
+    Args:
+      Y       : (1) An integer-valued list corresponding to received polynomial `Y(x)`
+                (2) A polynomial corresponding to `Y(x)`
+      is_poly : Is return polynomial
+
+    Returns:
+    if is_poly == True:
+      decoded polynomial `C(x)`
+    else:
+      An integer-valued list corresponsing to decoded message
+    '''
     if s.debug:
       print '[+] Y(x):', Y
+
+    if not isinstance(Y, s.PR.Element):
+      Y = s.to_poly(Y)
     # Compute Syndrome
     S = []
     for i in xrange(2*s.t):
@@ -125,28 +178,32 @@ class ReedSolomonCode(object):
       print '[+] E(x):', error_poly
       print '[+] Corrected Polynomial:', error_poly + Y
 
-    return error_poly + Y
+    if is_poly:
+      return error_poly + Y
+    else:
+      return s.to_list(error_poly + Y)[s.K:]
 
+  '''
   def decode_lagrange_interpolate(s, Y):
     S = []
     for i in xrange(s.b, 2*s.t + s.b):
       S += [(s.zz^i, Y(s.zz^i))]
     return Y + s.PR.lagrange_polynomial(S)
+  '''
 
 def main():
   F = GF(2^8, 'zz', modulo=x^8+x^4+x+3+x^2+1)
   R = ReedSolomonCode(F, 16, 8)
-  C = R.encode(map(lambda x: ord(x), 'hogefuga'))
+  C = R.encode(map(lambda x: ord(x), 'hogefuga'), True)
 
   # Sample Error
   E = R.to_poly([0, 0, 20, 0, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 253])
 
   # Received Polynomial
   Y = C + E
-  C2 = R.decode(Y)
+  M2 = R.decode(Y)
 
-  assert ''.join(map(chr, R.to_list(C2)[R.K:])) == 'hogefuga'
-  assert C2 == C
+  assert ''.join(map(chr, M2)) == 'hogefuga'
 
 if __name__ == '__main__':
   main()
