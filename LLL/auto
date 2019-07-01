@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo "[+] Python2"
+python test.py
+echo "[+] Python3 w/ coverage measuring"
+coverage run test.py ; coverage report -m
