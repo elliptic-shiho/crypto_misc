@@ -6,7 +6,7 @@ class Vector:
     kwargs = {
       'base_class': (int, float),
     }
-    kwargs.update(kwargs)
+    kwargs.update(_kwargs)
     s.base = kwargs['base_class']
 
     if len(args) == 1 and hasattr(args[0], '__iter__'):
