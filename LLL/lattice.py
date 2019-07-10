@@ -12,7 +12,7 @@ class IntegerLattice:
     if len(args) == 1 and hasattr(args[0], '__iter__'):
       s.basis = list(args[0])
     else:
-      s.basis = args
+      s.basis = list(args)
 
     if not all(isinstance(v, Vector) for v in s.basis):
       raise ValueError("A lattice basis must be a list of instance of Vector.")
@@ -49,37 +49,3 @@ def gram_schmidt_orthgonalization(L):
       t = t.add(ret[i].scalar_mult(Fraction(basis[j].inner_product(ret[i]), ret[i].inner_product(ret[i]))))
     ret += [basis[j].sub(t)]
   return ret
-
-def main():
-  bs = [Vector(1, 122, 133, 58, 203)]
-  bs += [Vector(0, 259, 0, 0, 0)]
-  bs += [Vector(0, 0, 259, 0, 0)]
-  bs += [Vector(0, 0, 0, 259, 0)]
-  bs += [Vector(0, 0, 0, 0, 259)]
-
-  L = IntegerLattice(bs)
-
-  X = Vector(-4, 30, -14, 27, -35)
-  assert L.is_point(X)
-
-  bs = [Vector(1, 0, 0, 0, 12345)]
-  bs += [Vector(0, 1, 0, 0, 13333)]
-  bs += [Vector(0, 0, 1, 0, 10058)]
-  bs += [Vector(0, 0, 0, 1, 1033)]
-  bs += [Vector(0, 0, 0, 0, 15432)]
-
-  L = IntegerLattice(bs)
-
-  X = Vector(-2, -3, 5, -1, 0)
-  assert L.is_point(X)
-
-  ret = gram_schmidt_orthgonalization(L)
-  print(ret[1].inner_product(ret[3]))
-
-class TestLattice(unittest.TestCase):
-  def test_gcd(s):
-    s.assertEqual(gcd(1, 1), 1, 'gcd(1, 1)')
-    s.assertEqual(gcd(5, 5), 1, 'gcd(5, 5)')
-
-main()
-
