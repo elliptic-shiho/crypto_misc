@@ -60,7 +60,6 @@ def gram_schmidt_orthgonalization(L):
   return ret
 
 def is_LLL_basis(L, delta=3/4):
-  eps = 1e-10
   n = len(L.basis)
   m = len(L.basis[0])
   gs_basis = gram_schmidt_orthgonalization(L)
