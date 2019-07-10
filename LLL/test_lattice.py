@@ -1,7 +1,7 @@
 import unittest
 
 from vector import Vector
-from lattice import gcd, IntegerLattice, gram_schmidt_orthgonalization
+from lattice import gcd, IntegerLattice, gram_schmidt_orthgonalization, LLL, is_LLL_basis
 
 IS_PY2 = not hasattr('dummy', '__iter__')
 
@@ -18,9 +18,10 @@ class TestLattice(unittest.TestCase):
     bs1 += [Vector(0, 0, 0, 0, 259)]
 
     L1 = IntegerLattice(bs1)
+    L2 = IntegerLattice(bs1[0], bs1[1], bs1[2], bs1[3], bs1[4])
 
     s.assertEqual(L1.basis, bs1)
-    s.assertEqual(IntegerLattice(bs1[0], bs1[1], bs1[2], bs1[3], bs1[4]).basis, bs1)
+    s.assertEqual(L2.basis, bs1)
 
     with s.assertRaises(ValueError) as cm:
       IntegerLattice("hoge")
@@ -38,7 +39,9 @@ class TestLattice(unittest.TestCase):
 
     s.assertEqual(str(L1), 'Integer Lattice with 5 basis [(1, 122, 133, 58, 203), (0, 259, 0, 0, 0), (0, 0, 259, 0, 0), (0, 0, 0, 259, 0), (0, 0, 0, 0, 259)]', '__str__')
 
-
+    s.assertEqual(L1, L2)
+    s.assertEqual(L1, bs1)
+    s.assertNotEqual(L1, 1)
 
   def test_is_point(s):
     bs1 = [Vector(1, 122, 133, 58, 203)]
@@ -75,6 +78,44 @@ class TestLattice(unittest.TestCase):
     for v1 in gs_basis:
       for v2 in gs_basis:
         if v1 != v2:
-          s.assertEqual(v1.inner_product(v2), 0, '')
+          s.assertEqual(v1.inner_product(v2), 0)
 
+  def test_lll(s):
+    bs1 = [Vector(4, 1, 2)]
+    bs1 += [Vector(4, 7, 2)]
+    bs1 += [Vector(3, 1, 7)]
 
+    bs1_expected =  [Vector(4, 1, 2)]
+    bs1_expected += [Vector(-1, 0, 5)]
+    bs1_expected += [Vector(0, 6, 0)]
+
+    L1 = IntegerLattice(bs1)
+    s.assertFalse(is_LLL_basis(L1))
+
+    L2 = LLL(L1)
+    s.assertTrue(is_LLL_basis(L2))
+    s.assertFalse(is_LLL_basis(L2, delta=1.5)) # delta * ||b[i]|| > ||b[i+1]||
+
+    L2_expected = IntegerLattice(bs1_expected)
+    s.assertEqual(L2, L2_expected)
+
+    bs2 = [Vector(1, 122, 133, 58, 203)]
+    bs2 += [Vector(0, 259, 0, 0, 0)]
+    bs2 += [Vector(0, 0, 259, 0, 0)]
+    bs2 += [Vector(0, 0, 0, 259, 0)]
+    bs2 += [Vector(0, 0, 0, 0, 259)]
+
+    bs2_expected = [Vector(-4, 30, -14, 27, -35)]
+    bs2_expected += [Vector(-23, 43, 49, -39, -7)]
+    bs2_expected += [Vector(-13, -32, 84, 23, -49)]
+    bs2_expected += [Vector(45, 51, 28, 20, 70)]
+    bs2_expected += [Vector(-70, 7, 14, 84, 35)]
+
+    L3 = IntegerLattice(bs2)
+    s.assertFalse(is_LLL_basis(L3))
+
+    L4 = LLL(L3)
+    s.assertTrue(is_LLL_basis(L4))
+
+    L4_expected = IntegerLattice(bs2_expected)
+    s.assertEqual(L4, L4_expected)

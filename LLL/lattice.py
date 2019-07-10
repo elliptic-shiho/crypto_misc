@@ -1,3 +1,4 @@
+from __future__ import division
 from fractions import Fraction
 from vector import Vector
 import unittest
@@ -33,6 +34,14 @@ class IntegerLattice:
     ret += '(' + ', '.join(map(repr, s.basis)) + ')'
     return ret
 
+  def __eq__(s, other):
+    if isinstance(other, IntegerLattice):
+      return s.basis == other.basis
+    elif hasattr(other, '__iter__'):
+      return s.basis == list(other)
+    else:
+      return False
+
   def __str__(s):
     return 'Integer Lattice with {} basis [{}]'.format(len(s.basis), ', '.join(map(str, s.basis)))
 
@@ -49,3 +58,44 @@ def gram_schmidt_orthgonalization(L):
       t = t.add(ret[i].scalar_mult(Fraction(basis[j].inner_product(ret[i]), ret[i].inner_product(ret[i]))))
     ret += [basis[j].sub(t)]
   return ret
+
+def is_LLL_basis(L, delta=3/4):
+  eps = 1e-10
+  n = len(L.basis)
+  m = len(L.basis[0])
+  gs_basis = gram_schmidt_orthgonalization(L)
+  for i in range(1, n):
+    bi = L.basis[i]
+    for j in range(i):
+      bj_star = gs_basis[j]
+      if abs(bi.inner_product(bj_star) / (bj_star.norm()**2)) > 1/2:
+        return False
+  for i in range(n - 1):
+    if delta * gs_basis[i].norm()**2 > gs_basis[i+1].norm()**2:
+      return False
+  return True
+
+def LLL(L, delta=3/4):
+  import copy
+  import math
+  L = copy.deepcopy(L)
+  n = len(L.basis)
+  while True:
+    for i in range(n):
+      for _j in range(i):
+        bi = L.basis[i]
+        j = i - _j - 1
+        bj = L.basis[j]
+        cij = int(math.floor(bi.inner_product(bj) / bj.inner_product(bj) + 0.5))
+        L.basis[i] = bi.sub(bj.scalar_mult(cij))
+
+    gs_basis = gram_schmidt_orthgonalization(L)
+    return_flag = True
+    for i in range(n - 1):
+      if delta * gs_basis[i].norm()**2 > gs_basis[i + 1].norm()**2:
+        L.basis[i], L.basis[i + 1] = L.basis[i + 1], L.basis[i]
+        return_flag = False
+        break
+    if return_flag:
+      return L
+
