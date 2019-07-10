@@ -81,6 +81,7 @@ class TestLattice(unittest.TestCase):
           s.assertEqual(v1.inner_product(v2), 0)
 
   def test_lll(s):
+    # Test vector from https://grampus.jaist.ac.jp/hiss/lattice/091109-revise.pdf p.42
     bs1 = [Vector(4, 1, 2)]
     bs1 += [Vector(4, 7, 2)]
     bs1 += [Vector(3, 1, 7)]
@@ -99,6 +100,7 @@ class TestLattice(unittest.TestCase):
     L2_expected = IntegerLattice(bs1_expected)
     s.assertEqual(L2, L2_expected)
 
+    # Test vector from http://jant.jsiam.org/006-shimizu.pdf p.44
     bs2 = [Vector(1, 122, 133, 58, 203)]
     bs2 += [Vector(0, 259, 0, 0, 0)]
     bs2 += [Vector(0, 0, 259, 0, 0)]
