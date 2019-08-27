@@ -19,6 +19,14 @@ def ror(x, y):
   return rol(x, k - y)
 
 
+def split(x):
+  return (x >> k, x & MASK)
+
+
+def merge(x, y):
+  return (x << k) | y
+
+
 def round_function(x, y, key):
   ret_x = ((ror(x, alpha) + y) % MOD) ^ key
   ret_y = rol(y, beta) ^ ret_x
@@ -34,18 +42,18 @@ def round_function_inverse(x, y, key):
 def encrypt(m, key):
   keys = expand_key(key)
   # assert len(keys) == ROUNDS, "Invalid keys specified"
-  x, y = m >> k, m & MASK
+  x, y = split(m)
   for i in range(ROUNDS):
     x, y = round_function(x, y, keys[i])
-  return (x << k) | y
+  return merge(x, y)
 
 
 def decrypt(c, key):
   keys = expand_key(key)
-  x, y = c >> k, c & MASK
+  x, y = split(c)
   for i in range(ROUNDS - 1, -1, -1):
     x, y = round_function_inverse(x, y, keys[i])
-  return (x << k) | y
+  return merge(x, y)
 
 
 def expand_key(key):
@@ -56,7 +64,7 @@ def expand_key(key):
   m = len(k_words)
   ret = [k_words[0]]
   ell = k_words[1:]
-  for i in range(ROUNDS):
+  for i in range(ROUNDS - 1):
     ell += [((ret[i] + ror(ell[i], alpha)) % MOD) ^ i]
     ret += [rol(ret[i], beta) ^ ell[i + m - 1]]
   return ret
